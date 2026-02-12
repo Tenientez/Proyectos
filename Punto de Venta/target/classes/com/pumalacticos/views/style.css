@@ -1,0 +1,55 @@
+/*
+ * Estilos para la interfaz "Liquid Glass"
+ */
+
+/* Estilo del panel raíz con un fondo oscuro y complejo */
+.root-pane {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, #4a4a5a, #1a1a2a);
+}
+
+/* Panel principal con efecto de "Vidrio Líquido" */
+.glass-pane {
+    /* Fondo: Gradiente diagonal de blanco con baja opacidad */
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+
+    /* Borde: Gradiente sutil para simular refracción de luz */
+    -fx-border-color: linear-gradient(from 0px 0px to 0px 1px, rgba(255, 255, 255, 0.5) 0%, transparent 100%);
+    -fx-border-width: 1px;
+
+    /* Bordes redondeados para suavizar la forma */
+    -fx-background-radius: 30;
+    -fx-border-radius: 30;
+
+    /* Sombra para dar profundidad y efecto flotante */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 50, 0, 0, 20);
+}
+
+/* Estilo para las etiquetas de texto */
+.control-label {
+    -fx-font-family: "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+    -fx-opacity: 0.9;
+    -fx-font-weight: bold;
+}
+
+/* Estilo para los botones con un toque minimalista */
+.glass-button {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-text-fill: white;
+    -fx-font-family: "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 50;
+    -fx-border-radius: 50;
+    -fx-border-width: 1px;
+    -fx-border-color: transparent;
+    -fx-padding: 10 20 10 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 5, 0, 0, 2);
+}
+
+.glass-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-cursor: hand;
+}
