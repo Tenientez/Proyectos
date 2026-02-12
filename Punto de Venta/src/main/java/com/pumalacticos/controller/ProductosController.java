@@ -1,29 +1,32 @@
 package com.pumalacticos.controller;
 
+import java.io.IOException;
+import java.util.Optional; // Importamos nuestro nuevo DAO
+
 import com.pumalacticos.OdinApp;
-import com.pumalacticos.model.data.DB;
+import com.pumalacticos.model.data.dao.ProductoDAO;
 import com.pumalacticos.model.domain.Producto;
+
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.layout.GridPane;
-import javafx.scene.control.Label;
-import javafx.application.Platform;
-
-
-import java.io.IOException;
-import java.util.Optional;
 
 public class ProductosController {
+
+    // Instancia del DAO para comunicarnos con SQLite
+    private final ProductoDAO productoDAO = new ProductoDAO();
 
     @FXML
     private TableView<Producto> tablaProductos;
@@ -43,7 +46,12 @@ public class ProductosController {
         colPrecio.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getPrecio()));
         colStock.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getStock()));
 
-        tablaProductos.setItems(FXCollections.observableArrayList(DB.productos));
+        cargarProductos(); // Método extraído para reutilizarlo
+    }
+
+    private void cargarProductos() {
+        // Obtenemos la lista fresca desde la base de datos
+        tablaProductos.setItems(FXCollections.observableArrayList(productoDAO.obtenerTodos()));
     }
 
     @FXML
@@ -87,9 +95,10 @@ public class ProductosController {
                     String nombre = nombreField.getText();
                     double precio = Double.parseDouble(precioField.getText());
                     int stock = Integer.parseInt(stockField.getText());
+                    // Asumimos categoría "General" y sin restricción por defecto
                     return new Producto(codigo, nombre, precio, stock, "General", false);
                 } catch (NumberFormatException e) {
-                    mostrarAlerta("Error de Formato", "Por favor, ingrese valores numéricos válidos para Precio y Stock.", Alert.AlertType.ERROR);
+                    mostrarAlerta("Error de Formato", "Por favor, ingrese valores numéricos válidos.", Alert.AlertType.ERROR);
                     return null;
                 }
             }
@@ -99,14 +108,15 @@ public class ProductosController {
         Optional<Producto> result = dialog.showAndWait();
 
         result.ifPresent(producto -> {
-            boolean yaExiste = DB.productos.stream()
-                                    .anyMatch(p -> p.getCodigoBarras().equals(producto.getCodigoBarras()));
+            // VERIFICACIÓN CON BASE DE DATOS
+            Producto existente = productoDAO.buscarPorCodigo(producto.getCodigoBarras());
 
-            if (yaExiste) {
-                mostrarAlerta("Error", "Ya existe un producto con el mismo código de barras.", Alert.AlertType.ERROR);
+            if (existente != null) {
+                mostrarAlerta("Error", "Ya existe un producto con el código: " + producto.getCodigoBarras(), Alert.AlertType.ERROR);
             } else {
-                DB.productos.add(producto);
-                tablaProductos.setItems(FXCollections.observableArrayList(DB.productos));
+                productoDAO.guardar(producto); // Guardamos en SQLite
+                cargarProductos(); // Refrescamos la tabla visual
+                mostrarAlerta("Éxito", "Producto guardado correctamente.", Alert.AlertType.INFORMATION);
             }
         });
     }
@@ -117,16 +127,17 @@ public class ProductosController {
         if (selectedProducto != null) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Confirmar Eliminación");
-            alert.setHeaderText("¿Está seguro de que desea eliminar el producto?");
-            alert.setContentText(selectedProducto.getNombre());
+            alert.setHeaderText("¿Está seguro de eliminar: " + selectedProducto.getNombre() + "?");
+            alert.setContentText("Esta acción no se puede deshacer.");
 
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                DB.productos.remove(selectedProducto);
-                tablaProductos.setItems(FXCollections.observableArrayList(DB.productos));
+                // ELIMINACIÓN EN BASE DE DATOS
+                productoDAO.eliminar(selectedProducto.getCodigoBarras());
+                cargarProductos(); // Refrescamos la tabla
             }
         } else {
-            mostrarAlerta("Ningún Producto Seleccionado", "Por favor, seleccione un producto de la tabla para eliminar.", Alert.AlertType.WARNING);
+            mostrarAlerta("Ningún Producto Seleccionado", "Por favor, seleccione un producto para eliminar.", Alert.AlertType.WARNING);
         }
     }
 

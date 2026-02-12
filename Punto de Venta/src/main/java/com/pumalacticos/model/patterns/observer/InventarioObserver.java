@@ -1,30 +1,37 @@
 package com.pumalacticos.model.patterns.observer;
 
-import com.pumalacticos.model.data.DB;
+import com.pumalacticos.model.data.dao.ProductoDAO; // Importamos DAO
 import com.pumalacticos.model.domain.LineaVenta;
+import com.pumalacticos.model.domain.Producto;
 import com.pumalacticos.model.domain.Venta;
 
 public class InventarioObserver implements IVentaObserver {
 
     @Override
     public void update(Venta venta) {
-        System.out.println(">>> [InventarioObserver] update() llamado. Actualizando stock...");
+        System.out.println(">>> [InventarioObserver] Actualizando stock en SQLite...");
+        
+        // Creamos una instancia del DAO para actualizar la BD
+        ProductoDAO productoDAO = new ProductoDAO();
 
         for (LineaVenta linea : venta.getLineas()) {
-            String codigoBuscado = linea.getProducto().getCodigoBarras();
+            String codigo = linea.getProducto().getCodigoBarras();
             int cantidadVendida = linea.getCantidad();
 
-            DB.productos.stream()
-                .filter(p -> p.getCodigoBarras().equals(codigoBuscado))
-                .findFirst()
-                .ifPresent(productoEnDB -> {
-                    int nuevoStock = productoEnDB.getStock() - cantidadVendida;
-                    if (nuevoStock < 0) nuevoStock = 0;
-                    
-                    productoEnDB.setStock(nuevoStock);
-                    System.out.println("    - Producto: " + productoEnDB.getNombre() + 
-                                       " | Nuevo Stock: " + nuevoStock);
-                });
+            // 1. Obtener el producto actual de la BD
+            Producto productoEnBD = productoDAO.buscarPorCodigo(codigo);
+            
+            if (productoEnBD != null) {
+                // 2. Calcular nuevo stock
+                int nuevoStock = productoEnBD.getStock() - cantidadVendida;
+                if (nuevoStock < 0) nuevoStock = 0;
+                
+                // 3. Actualizar el objeto y guardar en BD
+                productoEnBD.setStock(nuevoStock);
+                productoDAO.actualizar(productoEnBD);
+                
+                System.out.println("    - Actualizado: " + productoEnBD.getNombre() + " | Stock: " + nuevoStock);
+            }
         }
     }
 }
