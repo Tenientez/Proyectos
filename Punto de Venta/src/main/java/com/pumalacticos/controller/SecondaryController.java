@@ -1,5 +1,9 @@
 package com.pumalacticos.controller;
 
+import java.io.IOException;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import com.pumalacticos.OdinApp;
 import com.pumalacticos.model.domain.Venta;
 import com.pumalacticos.model.patterns.builderTicket.TicketBuilder;
@@ -13,10 +17,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-
-import java.io.IOException;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * Controlador para la vista de reportes (Secondary View).
@@ -53,7 +53,7 @@ public class SecondaryController {
         colFolio.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getId()));
         
         // Formateamos la fecha (ej. "21/11/2025 10:30")
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         colFecha.setCellValueFactory(cell -> new SimpleStringProperty(
             cell.getValue().getFecha().format(formatter)
         ));

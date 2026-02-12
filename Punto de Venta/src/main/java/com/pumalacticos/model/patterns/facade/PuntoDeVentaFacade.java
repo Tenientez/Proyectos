@@ -1,10 +1,11 @@
 package com.pumalacticos.model.patterns.facade;
 
-import java.util.ArrayList; // Mantenemos DB solo para historial de ventas por ahora
-import java.util.List; // Importante: Nuevo DAO
+import java.time.LocalDateTime; // Importante
+import java.util.ArrayList;
+import java.util.List;
 
-import com.pumalacticos.model.data.DB;
 import com.pumalacticos.model.data.dao.ProductoDAO;
+import com.pumalacticos.model.data.dao.VentaDAO;
 import com.pumalacticos.model.domain.LineaVenta;
 import com.pumalacticos.model.domain.Producto;
 import com.pumalacticos.model.domain.Venta;
@@ -18,12 +19,22 @@ public class PuntoDeVentaFacade {
 
     private final VentaBuilder ventaBuilder;
     private final List<IVentaObserver> observers;
-    private final ProductoDAO productoDAO; // Instancia del DAO
+    private final ProductoDAO productoDAO;
+    private final VentaDAO ventaDAO;
 
     public PuntoDeVentaFacade() {
         this.ventaBuilder = new VentaBuilder();
-        this.productoDAO = new ProductoDAO(); // Inicializamos la conexión
+        this.productoDAO = new ProductoDAO();
+        this.ventaDAO = new VentaDAO();
         
+        // --- AQUÍ ESTÁ EL CONTROL DE LA REGLA DE NEGOCIO ---
+        
+        // MODO PRODUCCIÓN (3 meses):
+        this.ventaDAO.limpiarHistorialAnteriorA(LocalDateTime.now().minusMonths(3));
+        
+        // MODO PRUEBA (Descomenta esta línea y comenta la de arriba para probar con 2 minutos):
+        // this.ventaDAO.limpiarHistorialAnteriorA(LocalDateTime.now().minusMinutes(2));
+
         this.observers = new ArrayList<>();
         this.observers.add(new InventarioObserver()); 
         this.observers.add(new HistorialObserver());
@@ -34,19 +45,16 @@ public class PuntoDeVentaFacade {
     }
 
     public void agregarProducto(String codigoBarras, int cantidad) throws Exception {
-        // 1. BUSCAR EN BASE DE DATOS (SQLITE)
         Producto producto = productoDAO.buscarPorCodigo(codigoBarras);
 
         if (producto == null) {
-            throw new Exception("Producto no encontrado en base de datos: " + codigoBarras);
+            throw new Exception("Producto no encontrado: " + codigoBarras);
         }
 
-        // 2. Verificación de stock (Usando el dato real de la DB)
         if (producto.getStock() <= 0) {
             throw new Exception("Agotado: " + producto.getNombre());
         }
     
-        // 3. Verificar carrito actual
         int cantidadEnCarrito = ventaBuilder.obtenerLineas().stream()
                 .filter(linea -> linea.getProducto().getCodigoBarras().equals(codigoBarras))
                 .mapToInt(LineaVenta::getCantidad)
@@ -106,8 +114,6 @@ public class PuntoDeVentaFacade {
     }
     
     public List<Venta> obtenerHistorialVentas() {
-        // Por ahora seguimos usando la lista en memoria para Ventas
-        // Más adelante crearemos VentaDAO
-        return DB.ventas;
+        return ventaDAO.obtenerHistorial();
     }
 }

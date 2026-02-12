@@ -1,16 +1,18 @@
 package com.pumalacticos.model.patterns.observer;
 
-import com.pumalacticos.model.data.DB;
+import com.pumalacticos.model.data.dao.VentaDAO;
 import com.pumalacticos.model.domain.Venta;
 
 public class HistorialObserver implements IVentaObserver {
 
     @Override
     public void update(Venta venta) {
-        // Guardamos la venta en la lista en memoria
-        DB.ventas.add(venta);
+        // Instanciamos el DAO localmente o podríamos tenerlo estático, 
+        // pero instanciar es seguro y barato en este contexto.
+        VentaDAO dao = new VentaDAO();
+        dao.guardar(venta);
         
-        System.out.println(">>> [HistorialObserver] update() llamado. Venta registrada.");
-        System.out.println("    - ID: " + venta.getId() + " | Total: $" + venta.getTotal());
+        System.out.println(">>> [HistorialObserver] Venta guardada en SQLite.");
+        System.out.println("    - Folio: " + venta.getId() + " | Total: $" + venta.getTotal());
     }
 }
