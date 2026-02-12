@@ -48,6 +48,7 @@
             </padding>
             <children>
                 <Button onAction="#agregarProducto" text="Agregar Producto" />
+                <Button onAction="#editarProducto" text="Editar Producto" style="-fx-background-color: #ff9800;" />
                 <Button onAction="#eliminarProducto" text="Eliminar Producto" />
                 <Button onAction="#irAPrincipal" text="Volver a Ventas" />
             </children>
